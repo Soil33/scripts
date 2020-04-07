@@ -10,11 +10,12 @@ ignored_names = ['INSIDER'] # names witch names that are ignored. example ['name
 title = 'asterisk' # title only for keepass to fill in the required field
 keepass_file = "import_to_keepas.txt" # path to the generated keepath file 
 txt_file = 'users.txt' # path to the generated txt file
-
+tmp_file='/tmp/sql_out'
+error_file='/tmp/sql_err'
 # you can change only <FIELD_NAME> in 
 # '\"number\":'   , '\"', <TELEPHONE NUMBER>   , '\"', ','
 # '\"name\":', '\"', <USERNAME>, '\"', ','
-# '\"email\":' , '\"', <E-MAIL>, '\"'
+# '\"email\":' , '\"', <>, '\"'
 
  
 query = """
@@ -40,18 +41,24 @@ SELECT CONCAT('[', better_result, ']') AS best_result FROM(
 import subprocess
 import json
 import random
+import os
+import time
 
 def get_data(username, passwd, query, hostname, port="3306"):
-	try:
-		result = subprocess.Popen(['mysql', '-u', username, '-p'+ passwd, '-h', hostname,'-P', port, '-e',  query], 				
-				stdout=subprocess.PIPE,	
-				stderr=subprocess.PIPE)
-		result.wait()
-		stdout, stderr = result.communicate()
+	try:		
+		with open(tmp_file,"wb") as out, open(error_file,"wb") as err:
+			subprocess.Popen(['mysql', '-u', username, '-p'+ passwd, '-h', hostname,'-P', port, '-e',  query], 				
+				stdout=out,	
+				stderr=err)
 	except Exception as e:		
-		stdout, stderr = "", "ERROR can't execute mysql commands"
+		 return {"", e}
+	time.sleep(5)	
+	f=open(tmp_file,'r')
+	stdout = f.read()
+	f.close()
 	
-	return {"stdout": stdout, "stderr": stderr }
+	
+	return {"stdout": stdout, "stderr": ""}
 
 
 	
@@ -110,11 +117,17 @@ def get_str_for_txt(persons):
 	return txt_str		
 
 #start
+print("create tmp file and execute mysql start")
 data = get_data(username, passwd, query, hostname, port)
 if data["stderr"] == '':
+	print('execute mysql over')
+	print('load data to json')
 	data = get_map_from_json(data['stdout'])
+	print('add login and password to data')
 	data = [add_login(person, ignored_names) for person in data]
+	print('Create output files')
         print("Keepass: ", "OK" if write_to_file(keepass_file, get_str_for_keepass(data, title)) else "ERROR")
 	print("TxtFile: ", "OK" if write_to_file(txt_file, get_str_for_txt(data)) else "ERROR")
+	os.system('rm '+tmp_file)
 else:
 	print (data["stderr"])
