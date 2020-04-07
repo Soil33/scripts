@@ -47,16 +47,11 @@ import time
 
 def get_data(username, passwd, query, hostname, port="3306"):
 	try:		
-		#out = open(tmp_file,"wb")
-		#err = open(error_file,"wb")
 		p = subprocess.Popen(['mysql', '-u', username, '-p'+ passwd, '-h', hostname,'-P', port, '-e',  query], 				
 				stdout=subprocess.PIPE,	
 				stderr=subprocess.PIPE
 				)
-		p.wait()
 		stdout, stderr = p.communicate()
-		#out.close()
-		#err.close()
 	except Exception as e:		
 		 return {'stdout':"", 'stderr':e}
 	
@@ -68,7 +63,7 @@ def get_data(username, passwd, query, hostname, port="3306"):
 def get_map_from_json(data):
 	lines = data.split('\n')
 	response = []
-	for line in lines[1:-2]:
+	for line in lines[1:-1]:
 		line = line.split('\t')
 		response.append({
 			"phone_number"	: line[0],
@@ -97,10 +92,15 @@ def write_to_file(path, s):
 
 def add_login(persone, ignore_list):
 	if persone['phone_number'] != '' and persone['name'] != '' and not any(person['name'].lower().find(i.lower() ) != -1 for i in ignore_list ):
-		persone['login'] =  "" + persone['name'].split('_')[0] + "_" + persone['phone_number']
+		name = persone['name'].split('_')
+		phone = persone['phone_number']
+		login = "%s-%s_%s"%(name[0], name[1][0:4], phone) if len(name) > 1 else "%s_%s"%(name[0], phone)
+		persone['login'] =  login
 		persone['passwd'] = generate_pass()
+		print("ADD\t: %s(%s)"%(persone['name'], login))
 	else:
 		persone['login'] = False 
+		print("IGNOR\t: %s"%persone['name'])
 	return persone
 
 def get_str_for_keepass(persons, title):
@@ -120,7 +120,7 @@ def get_str_for_txt(persons):
 	txt_str = ''
 	for persone in persons:
 		if persone['login']:
-			txt_str += '[%s](remote)\r\nusername = %s\r\nsecret = %s\r\ncallerid = %s\r\n\r\n'%(
+			txt_str += '[%s](remote)\r\nusername = %s\r\nsecret = %s\r\ncallerid = %s\r\nmailbox = 777@device\r\n\r\n'%(
 				persone['login'],
 				persone['login'],
 				persone['passwd'],

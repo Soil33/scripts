@@ -1,12 +1,5 @@
-s = """
-111
-211
-322
-433
-544
-655
-"""
-s = s.split("\n")
-print s
-for i in s:
-    print(i)
+l1 = ['name1']
+l2 = ['name2', 'sname2']
+t = l2
+s = "%s-%s"%(t[0], t[1][1:4]) if len(t) > 1 else "%s-NONE"%t[0]
+print (s)
