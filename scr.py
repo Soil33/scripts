@@ -18,19 +18,19 @@ error_file='/tmp/sql_err'
 # '\"email\":' , '\"', <>, '\"'
 
  
-query = """
-SELECT CONCAT('[', better_result, ']') AS best_result FROM( 
-	SELECT GROUP_CONCAT('{', my_json, '}' SEPARATOR ',') AS better_result FROM (
-		SELECT CONCAT ( 	
-				'\"phone_number\":'   , '\"', phone_number   , '\"', ',' 
-				'\"name\":', '\"', name, '\"', ','
-				'\"email\":' , '\"', email, '\"'  
-		 ) AS my_json FROM %s
-	 ) AS more_json
-) AS yet_more_json;
-"""%db_name
+#query = """
+#SELECT CONCAT('[', better_result, ']') AS best_result FROM( 
+#	SELECT GROUP_CONCAT('{', my_json, '}' SEPARATOR ',') AS better_result FROM (
+#		SELECT CONCAT ( 	
+#				'\"phone_number\":'   , '\"', phone_number   , '\"', ',' 
+#				'\"name\":', '\"', name, '\"', ','
+#				'\"email\":' , '\"', email, '\"'  
+#		 ) AS my_json FROM %s
+#	 ) AS more_json
+#) AS yet_more_json;
+#"""%db_name
 
-#query = """SELECT CONCAT( result, '\\n') AS result  FROM (SELECT phone_number, name, email FROM %s)"""%db_name 
+query = """SELECT phone_number, name, email FROM %s;"""%db_name 
 
 
 
@@ -49,14 +49,15 @@ def get_data(username, passwd, query, hostname, port="3306"):
 	try:		
 		out = open(tmp_file,"wb")
 		err = open(error_file,"wb")
-		subprocess.Popen(['mysql', '-u', username, '-p'+ passwd, '-h', hostname,'-P', port, '-e',  query], 				
+		sub = subprocess.Popen(['mysql', '-u', username, '-p'+ passwd, '-h', hostname,'-P', port, '-e',  query], 				
 				stdout=out,	
-				stderr=err)
+				stderr=err
+				)
 		out.close()
 		err.close()
 	except Exception as e:		
 		 return {'stdout':"", 'stderr':e}
-	time.sleep(5)	
+	time.sleep(3)	
 	f=open(tmp_file,'r')
 	stdout = f.read()
 	f.close()
@@ -67,8 +68,16 @@ def get_data(username, passwd, query, hostname, port="3306"):
 
 	
 def get_map_from_json(data):
-	data = data.split('\n')[1]
-	return json.loads(data)
+	lines = data.split('\n')
+	response = []
+	for line in lines[1:-2]:
+		line = line.split('\t')
+		response.append({
+			"phone_number"	: line[0],
+			"name"		: line[1],
+ 			"email"		: line[2]
+		})
+	return response
 
 
 
