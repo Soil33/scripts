@@ -30,6 +30,7 @@ SELECT CONCAT('[', better_result, ']') AS best_result FROM(
 ) AS yet_more_json;
 """%db_name
 
+#query = """SELECT CONCAT( result, '\\n') AS result  FROM (SELECT phone_number, name, email FROM %s)"""%db_name 
 
 
 
@@ -46,12 +47,15 @@ import time
 
 def get_data(username, passwd, query, hostname, port="3306"):
 	try:		
-		with open(tmp_file,"wb") as out, open(error_file,"wb") as err:
-			subprocess.Popen(['mysql', '-u', username, '-p'+ passwd, '-h', hostname,'-P', port, '-e',  query], 				
+		out = open(tmp_file,"wb")
+		err = open(error_file,"wb")
+		subprocess.Popen(['mysql', '-u', username, '-p'+ passwd, '-h', hostname,'-P', port, '-e',  query], 				
 				stdout=out,	
 				stderr=err)
+		out.close()
+		err.close()
 	except Exception as e:		
-		 return {"", e}
+		 return {'stdout':"", 'stderr':e}
 	time.sleep(5)	
 	f=open(tmp_file,'r')
 	stdout = f.read()
@@ -63,7 +67,8 @@ def get_data(username, passwd, query, hostname, port="3306"):
 
 	
 def get_map_from_json(data):
-	return json.loads(data.split('\n')[1])
+	data = data.split('\n')[1]
+	return json.loads(data)
 
 
 
@@ -95,20 +100,20 @@ def get_str_for_keepass(persons, title):
 	kp_str = '"Account","Login Name","Password","Web Site","Comments"\r\n'
 	for person in persons:
 		if person['login']:
-			kp_str += '"{}","{}","{}","{}","{}"\r\n'.format(
+
+			kp_str += '"%s","%s","%s","%s","%s"\r\n'%(
 			title, 
 			person['login'], 
 			person['passwd'],
 			person['email'],
-			person['name']+" " 
-			+person['phone_number'] )
+			person['name'])
 	return kp_str
 
 def get_str_for_txt(persons):
 	txt_str = ''
 	for persone in persons:
 		if persone['login']:
-			txt_str += '[{}](remote)\r\nusername = {}\r\nsecret = {}\r\ncallerid = {}\r\n\r\n'.format(
+			txt_str += '[%s](remote)\r\nusername = %s\r\nsecret = %s\r\ncallerid = %s\r\n\r\n'%(
 				persone['login'],
 				persone['login'],
 				persone['passwd'],
