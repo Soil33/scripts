@@ -124,7 +124,7 @@ def get_str_for_txt(persons):
 				persone['login'],
 				persone['login'],
 				persone['passwd'],
-				persone['phone_number']
+				persone['phone_number'],
 				persone['email']
 			)
 	return txt_str		
