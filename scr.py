@@ -14,7 +14,7 @@ txt_file = 'users.txt' # path to the generated txt file
 # you can change only <FIELD_NAME> in 
 # '\"number\":'   , '\"', <TELEPHONE NUMBER>   , '\"', ','
 # '\"name\":', '\"', <USERNAME>, '\"', ','
-# '\"email\":' , '\"', <>, '\"'
+# '\"email\":' , '\"', <E-MAIL>, '\"'
 
  
 query = """
