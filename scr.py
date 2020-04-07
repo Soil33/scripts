@@ -47,23 +47,21 @@ import time
 
 def get_data(username, passwd, query, hostname, port="3306"):
 	try:		
-		out = open(tmp_file,"wb")
-		err = open(error_file,"wb")
-		sub = subprocess.Popen(['mysql', '-u', username, '-p'+ passwd, '-h', hostname,'-P', port, '-e',  query], 				
-				stdout=out,	
-				stderr=err
+		#out = open(tmp_file,"wb")
+		#err = open(error_file,"wb")
+		p = subprocess.Popen(['mysql', '-u', username, '-p'+ passwd, '-h', hostname,'-P', port, '-e',  query], 				
+				stdout=subprocess.PIPE,	
+				stderr=subprocess.PIPE
 				)
-		out.close()
-		err.close()
+		p.wait()
+		stdout, stderr = p.communicate()
+		#out.close()
+		#err.close()
 	except Exception as e:		
 		 return {'stdout':"", 'stderr':e}
-	time.sleep(3)	
-	f=open(tmp_file,'r')
-	stdout = f.read()
-	f.close()
 	
 	
-	return {"stdout": stdout, "stderr": ""}
+	return {"stdout": stdout, "stderr": stderr}
 
 
 	
@@ -98,7 +96,7 @@ def write_to_file(path, s):
 
 
 def add_login(persone, ignore_list):
-	if persone['phone_number'] != '' and persone['name'] != '' and not any(person['name'].lower() == i.lower() for i in ignore_list ):
+	if persone['phone_number'] != '' and persone['name'] != '' and not any(person['name'].lower().find(i.lower() ) != -1 for i in ignore_list ):
 		persone['login'] =  "" + persone['name'].split('_')[0] + "_" + persone['phone_number']
 		persone['passwd'] = generate_pass()
 	else:
@@ -131,17 +129,16 @@ def get_str_for_txt(persons):
 	return txt_str		
 
 #start
-print("create tmp file and execute mysql start")
+print("- Load data")
 data = get_data(username, passwd, query, hostname, port)
 if data["stderr"] == '':
-	print('execute mysql over')
-	print('load data to json')
+	print('- Create map')
 	data = get_map_from_json(data['stdout'])
-	print('add login and password to data')
+	print('- Add login and password to data')
 	data = [add_login(person, ignored_names) for person in data]
-	print('Create output files')
+	print('- Create output files')
         print("Keepass: ", "OK" if write_to_file(keepass_file, get_str_for_keepass(data, title)) else "ERROR")
-	print("TxtFile: ", "OK" if write_to_file(txt_file, get_str_for_txt(data)) else "ERROR")
-	os.system('rm '+tmp_file)
+	print("TxtFile: ", "OK" if write_to_file(txt_file, get_str_for_txt(data)) else "ERROR")	
+	print('- DONE!!!!')
 else:
 	print (data["stderr"])
