@@ -120,11 +120,12 @@ def get_str_for_txt(persons):
 	txt_str = ''
 	for persone in persons:
 		if persone['login']:
-			txt_str += '[%s](remote)\r\nusername = %s\r\nsecret = %s\r\ncallerid = %s\r\nmailbox = 777@device\r\n\r\n'%(
+			txt_str += '[%s](remote)\r\nusername = %s\r\nsecret = %s\r\ncallerid = %s\r\nmailbox = %s\r\n\r\n'%(
 				persone['login'],
 				persone['login'],
 				persone['passwd'],
 				persone['phone_number']
+				persone['email']
 			)
 	return txt_str		
 
